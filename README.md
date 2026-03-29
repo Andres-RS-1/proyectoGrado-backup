@@ -29,7 +29,7 @@ Dashboard inteligente para monitoreo **en tiempo real** de consumo eléctrico co
 ## 👨‍💻 **Autor**
 
 **Andres RS** - Estudiante Ingeniería de Sistemas  
-[LinkedIn]((https://www.linkedin.com/in/andres-rincon-sanchez/))
+[LinkedIn](https://www.linkedin.com/in/andres-rincon-sanchez/)
 
 ## 📄 **Licencia**
 
