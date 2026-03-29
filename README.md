@@ -1,75 +1,46 @@
-# React + TypeScript + Vite
+# 🚀 proyectoGrado - Sistema IoT Consumo Energético
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Dashboard inteligente para monitoreo **en tiempo real** de consumo eléctrico con alertas automáticas.
 
-Currently, two official plugins are available:
+![Screenshot Dashboard](https://github.com/Andres-RS-1/proyectoGrado-backup/blob/main/src/assets/hero.png?raw=true)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ **Features**
 
-## React Compiler
+- 📊 **Dashboard** consumo Watts/Volts/Corriente (live + histórico)
+- 🚨 **Alertas Inteligentes** (alto/muy alto/crítico)
+- 📈 **Estadísticas** 30 días + gráficos
+- 💡 **Recomendaciones** ahorro energético
+- 🌍 **Impacto Ambiental** CO2 evitado
+- 📱 **Responsive** Mobile/Desktop
+- 🌙 **Dark Mode**
+- 🔊 **Sonidos + Notificaciones**
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## 🛠️ **Tech Stack**
 
-Note: This will impact Vite dev & build performances.
+## 🎯 **Funcionalidades Clave**
 
-## Expanding the ESLint configuration
+| Pantalla         | Features                          |
+| ---------------- | --------------------------------- |
+| **Login**        | Autenticación hogar/local         |
+| **Config**       | Umbral alertas + simulación IoT   |
+| **Dashboard**    | Métricas live + navegación        |
+| **Alertas**      | Filtros + Switch "solo no leídas" |
+| **Estadísticas** | Gráficos 24h/7d/30d               |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 **Quick Start**
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/Andres-RS-1/proyectoGrado-backup.git
+cd proyectoGrado-backup
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 👨‍💻 **Autor**
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**Andres RS** - Estudiante Ingeniería de Sistemas  
+[LinkedIn](https://linkedin.com/in/andresrs) | [GitHub](https://github.com/Andres-RS-1)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📄 **Licencia**
+
+MIT License - © 2026 Andres RS
