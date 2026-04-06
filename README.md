@@ -1,10 +1,5 @@
 # 🚀 proyectoGrado - Sistema IoT Consumo Energético
 
-[![GitHub Pages Status](https://github.com/Andres-RS-1/proyectoGrado-backup/actions/workflows/deploy-gh-pages.yml/badge.svg?branch=main)](https://github.com/Andres-RS-1/proyectoGrado-backup/actions/workflows/deploy-gh-pages.yml)
-[![GitHub Pages](https://img.shields.io/github/deployments-status/main/Andres-RS-1/proyectoGrado-backup/gh-pages)](https://github.com/Andres-RS-1/proyectoGrado-backup/deployments)
-[![Docker Pulls](https://img.shields.io/docker/pulls/andresrz01/proyecto-grado)](https://hub.docker.com/r/andresrz01/proyecto-grado)
-[![Docker Stars](https://img.shields.io/docker/stars/andresrz01/proyecto-grado)](https://hub.docker.com/r/andresrz01/proyecto-grado)
-
 Dashboard inteligente para monitoreo **en tiempo real** de consumo eléctrico con alertas automáticas. **Proyecto de grado - Ingeniería de Sistemas.**
 
 **[Live Demo →](https://andres-rs-1.github.io/proyectoGrado-backup/)**
@@ -53,10 +48,6 @@ docker pull andresrz01/proyecto-grado:latest
 docker run -p 5173:5173 andresrz01/proyecto-grado:latest
 ```
 **[localhost:5173](http://localhost:5173)**
-
-## 📱 **Demo Screenshots**
-
-*(Agrega aquí screenshots cuando tengas)*
 
 ## 👨‍💻 **Autor**
 
