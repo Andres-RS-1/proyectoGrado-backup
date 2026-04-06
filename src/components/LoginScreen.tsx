@@ -5,14 +5,14 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Zap, Leaf } from 'lucide-react';
+import { BarChart3, Zap } from 'lucide-react'; // Icono más técnico
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
 
 interface User {
   name: string;
   email: string;
-  type: 'hogar' | 'local';
+  type: 'pyme' | 'industrial';
 }
 
 interface LoginScreenProps {
@@ -25,7 +25,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
-  const [userType, setUserType] = useState<'hogar' | 'local'>('hogar');
+  const [userType, setUserType] = useState<'pyme' | 'industrial'>('pyme');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +33,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       onLogin({
         name: loginEmail.split('@')[0],
         email: loginEmail,
-        type: 'hogar'
+        type: 'pyme' // Por defecto Pyme para el proyecto
       });
       toast.success('¡Inicio de sesión exitoso!');
     } else {
@@ -49,14 +49,14 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         email: registerEmail,
         type: userType
       });
-      toast.success('¡Registro exitoso!');
+      toast.success('¡Usuario registrado!');
     } else {
       toast.error('Por favor completa todos los campos');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0077b6] via-[#32a852] to-[#0077b6] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -77,9 +77,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             }}
           >
             <div className="relative">
-              <Zap className="w-16 h-16 text-[#32a852] fill-[#32a852]" />
+              <BarChart3 className="w-16 h-16 text-blue-400" />
               <motion.div
-                className="absolute -inset-2 rounded-full border-2 border-[#32a852] opacity-50"
+                className="absolute -inset-2 rounded-full border-2 border-blue-400 opacity-50"
                 animate={{
                   scale: [1, 1.3, 1],
                   opacity: [0.5, 0, 0.5]
@@ -91,25 +91,25 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               />
             </div>
           </motion.div>
-          <h1 className="text-white text-4xl mb-2">ECO-LUZ 360</h1>
-          <p className="text-white/90 flex items-center justify-center gap-2">
-            <Leaf className="w-4 h-4" />
-            Monitoreo Inteligente de Energía
+          <h1 className="text-white text-4xl mb-2 font-bold">ProyectoGrado</h1>
+          <p className="text-blue-100 flex items-center justify-center gap-2 text-lg">
+            <Zap className="w-5 h-5" />
+            Dashboard de Monitoreo Energético
           </p>
         </div>
 
-        <Card className="backdrop-blur-sm bg-white/95">
+        <Card className="backdrop-blur-sm bg-white/95 border-0 shadow-2xl">
           <CardHeader>
-            <CardTitle>Bienvenido</CardTitle>
+            <CardTitle className="text-2xl">Acceso al Sistema</CardTitle>
             <CardDescription>
-              Ingresa o regístrate para comenzar a monitorear tu consumo eléctrico
+              Plataforma de análisis y monitoreo para gestión energética en PYMES
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-                <TabsTrigger value="register">Registrarse</TabsTrigger>
+                <TabsTrigger value="register">Nuevo Usuario</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -119,7 +119,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     <Input
                       id="login-email"
                       type="email"
-                      placeholder="tu@email.com"
+                      placeholder="usuario@empresa.com"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       required
@@ -136,8 +136,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full bg-[#32a852] hover:bg-[#2a8f46]">
-                    Acceder al Panel
+                  <Button type="submit" className="w-full">
+                    Acceder a Dashboard
                   </Button>
                 </form>
               </TabsContent>
@@ -145,22 +145,22 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               <TabsContent value="register">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="register-name">Nombre completo</Label>
+                    <Label htmlFor="register-name">Nombre de la Empresa</Label>
                     <Input
                       id="register-name"
                       type="text"
-                      placeholder="Tu nombre"
+                      placeholder="Nombre PYME / Industrial"
                       value={registerName}
                       onChange={(e) => setRegisterName(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-email">Correo electrónico</Label>
+                    <Label htmlFor="register-email">Correo institucional</Label>
                     <Input
                       id="register-email"
                       type="email"
-                      placeholder="tu@email.com"
+                      placeholder="contacto@empresa.com"
                       value={registerEmail}
                       onChange={(e) => setRegisterEmail(e.target.value)}
                       required
@@ -178,20 +178,20 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Tipo de usuario</Label>
-                    <RadioGroup value={userType} onValueChange={(value: 'hogar' | 'local') => setUserType(value)}>
+                    <Label>Tipo de Establecimiento</Label>
+                    <RadioGroup value={userType} onValueChange={(value: 'pyme' | 'industrial') => setUserType(value)}>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="hogar" id="hogar" />
-                        <Label htmlFor="hogar" className="cursor-pointer">Hogar</Label>
+                        <RadioGroupItem value="pyme" id="pyme" />
+                        <Label htmlFor="pyme" className="cursor-pointer">PYME</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="local" id="local" />
-                        <Label htmlFor="local" className="cursor-pointer">Local comercial</Label>
+                        <RadioGroupItem value="industrial" id="industrial" />
+                        <Label htmlFor="industrial" className="cursor-pointer">Industrial</Label>
                       </div>
                     </RadioGroup>
                   </div>
-                  <Button type="submit" className="w-full bg-[#0077b6] hover:bg-[#005f93]">
-                    Crear cuenta
+                  <Button type="submit" className="w-full">
+                    Crear Usuario
                   </Button>
                 </form>
               </TabsContent>
@@ -199,8 +199,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           </CardContent>
         </Card>
 
-        <p className="text-white/80 text-center text-sm mt-6">
-          Bogotá, Colombia 🇨🇴 | Energía sostenible para todos
+        <p className="text-blue-100/80 text-center text-sm mt-6">
+          Plataforma de Ingeniería de Sistemas - Proyecto de Grado 2026
         </p>
       </motion.div>
     </div>

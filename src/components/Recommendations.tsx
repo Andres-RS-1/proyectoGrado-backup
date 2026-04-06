@@ -2,11 +2,24 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Lightbulb, Check, Leaf, Zap, Home, Sun, Wind, Droplet } from 'lucide-react';
+import {
+  Lightbulb,
+  Check,
+  Leaf,
+  Zap,
+  Sun,
+  Wind,
+  Settings,
+  Factory,
+  BarChart3,
+  Gauge,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface RecommendationsProps {
-  onNavigate: (screen: 'dashboard' | 'statistics' | 'alerts' | 'recommendations' | 'environmental') => void;
+  onNavigate: (
+    screen: 'dashboard' | 'statistics' | 'alerts' | 'recommendations' | 'environmental'
+  ) => void;
   isDarkMode: boolean;
 }
 
@@ -14,131 +27,166 @@ interface Recommendation {
   id: string;
   title: string;
   description: string;
-  category: 'iluminacion' | 'climatizacion' | 'electrodomesticos' | 'general';
+  category: 'iluminacion' | 'climatizacion' | 'equipos' | 'gestion' | 'general';
   impact: 'alto' | 'medio' | 'bajo';
   icon: React.ReactNode;
   completed: boolean;
 }
 
-export default function Recommendations({ onNavigate, isDarkMode }: RecommendationsProps) {
+export default function Recommendations({ onNavigate }: RecommendationsProps) {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([
     {
       id: '1',
-      title: 'Usa bombillos LED',
-      description: 'Los bombillos LED consumen hasta 80% menos energía que los incandescentes y duran mucho más tiempo. Reemplaza gradualmente todos los bombillos de tu hogar.',
+      title: 'Migrar progresivamente a iluminación LED',
+      description:
+        'Sustituye luminarias antiguas por tecnología LED en oficinas, zonas de producción y áreas comunes. Esto reduce consumo, mantenimiento y mejora la eficiencia del sistema de iluminación.',
       category: 'iluminacion',
       impact: 'alto',
       icon: <Lightbulb className="w-5 h-5" />,
-      completed: false
+      completed: false,
     },
     {
       id: '2',
-      title: 'Desconecta cargadores innecesarios',
-      description: 'Los cargadores conectados sin usar consumen energía "fantasma". Desconéctalos cuando no los estés utilizando para ahorrar energía.',
-      category: 'electrodomesticos',
-      impact: 'medio',
+      title: 'Implementar apagado operativo al final de la jornada',
+      description:
+        'Define un protocolo de cierre para apagar equipos no esenciales, pantallas, impresoras, extractores y sistemas auxiliares cuando no estén en uso.',
+      category: 'gestion',
+      impact: 'alto',
       icon: <Zap className="w-5 h-5" />,
-      completed: false
+      completed: false,
     },
     {
       id: '3',
-      title: 'Optimiza la temperatura del aire acondicionado',
-      description: 'Mantén el aire acondicionado entre 24-26°C. Cada grado menos aumenta el consumo en 8%. Usa ventiladores para complementar.',
+      title: 'Optimizar parámetros de climatización',
+      description:
+        'Mantén la climatización en rangos adecuados para confort y operación, evitando sobreenfriamiento. Un ajuste eficiente reduce picos de demanda y mejora el desempeño energético.',
       category: 'climatizacion',
       impact: 'alto',
       icon: <Wind className="w-5 h-5" />,
-      completed: false
+      completed: false,
     },
     {
       id: '4',
-      title: 'Aprovecha la luz natural',
-      description: 'Abre cortinas y persianas durante el día. La luz natural reduce la necesidad de iluminación artificial y ahorra energía.',
+      title: 'Aprovechar iluminación natural en horario diurno',
+      description:
+        'Coordina apertura de persianas, redistribución de puestos y uso de sectores iluminados naturalmente para disminuir la dependencia de luz artificial durante el día.',
       category: 'iluminacion',
       impact: 'medio',
       icon: <Sun className="w-5 h-5" />,
-      completed: false
+      completed: false,
     },
     {
       id: '5',
-      title: 'Usa electrodomésticos eficientes',
-      description: 'Al comprar nuevos electrodomésticos, busca etiquetas de eficiencia energética A+ o superior. El ahorro a largo plazo es significativo.',
-      category: 'electrodomesticos',
+      title: 'Renovar equipos con criterios de eficiencia energética',
+      description:
+        'Al reemplazar equipos, prioriza referencias con mejor desempeño energético y menor consumo específico. Evalúa el costo de operación, no solo el costo de compra.',
+      category: 'equipos',
       impact: 'alto',
-      icon: <Home className="w-5 h-5" />,
-      completed: false
+      icon: <Factory className="w-5 h-5" />,
+      completed: false,
     },
     {
       id: '6',
-      title: 'Lava con agua fría',
-      description: 'El 90% de la energía que usa la lavadora es para calentar el agua. Lavar con agua fría ahorra energía y cuida mejor tu ropa.',
-      category: 'electrodomesticos',
-      impact: 'medio',
-      icon: <Droplet className="w-5 h-5" />,
-      completed: false
+      title: 'Programar mantenimiento preventivo de equipos críticos',
+      description:
+        'Motores, compresores, ventiladores y sistemas de climatización con mantenimiento deficiente consumen más energía. Un plan preventivo mejora rendimiento y estabilidad operativa.',
+      category: 'equipos',
+      impact: 'alto',
+      icon: <Settings className="w-5 h-5" />,
+      completed: false,
     },
     {
       id: '7',
-      title: 'Limpia los filtros del aire acondicionado',
-      description: 'Los filtros sucios hacen que el aire acondicionado trabaje más y consuma más energía. Límpialos cada 2 semanas.',
-      category: 'climatizacion',
-      impact: 'medio',
-      icon: <Wind className="w-5 h-5" />,
-      completed: false
+      title: 'Monitorear y analizar consumos por franjas horarias',
+      description:
+        'Identifica horas pico de demanda para redistribuir cargas, programar procesos y evitar sobreconsumos concentrados en periodos específicos.',
+      category: 'gestion',
+      impact: 'alto',
+      icon: <BarChart3 className="w-5 h-5" />,
+      completed: false,
     },
     {
       id: '8',
-      title: 'Apaga luces en habitaciones vacías',
-      description: 'Crea el hábito de apagar las luces al salir de una habitación. Instala sensores de movimiento en áreas de paso.',
+      title: 'Instalar controles de encendido por zonas',
+      description:
+        'Sectoriza iluminación y equipos auxiliares para que operen solo donde realmente se requieren. Esto evita consumos innecesarios en áreas desocupadas.',
       category: 'iluminacion',
       impact: 'medio',
       icon: <Lightbulb className="w-5 h-5" />,
-      completed: false
+      completed: false,
     },
     {
       id: '9',
-      title: 'Desconecta el modo standby',
-      description: 'Los aparatos en modo standby consumen energía. Usa regletas con interruptor para desconectar varios dispositivos fácilmente.',
-      category: 'electrodomesticos',
+      title: 'Eliminar consumos en standby de equipos administrativos',
+      description:
+        'Computadores, monitores, routers, impresoras y periféricos pueden seguir consumiendo energía fuera del horario laboral. Usa regletas, temporizadores o políticas de apagado.',
+      category: 'equipos',
       impact: 'medio',
       icon: <Zap className="w-5 h-5" />,
-      completed: false
+      completed: false,
     },
     {
       id: '10',
-      title: 'Sella puertas y ventanas',
-      description: 'Las fugas de aire hacen que el aire acondicionado trabaje más. Sella grietas y rendijas para mantener la temperatura.',
-      category: 'climatizacion',
+      title: 'Definir indicadores energéticos para seguimiento continuo',
+      description:
+        'Establece indicadores como consumo diario, costo energético, picos de demanda o consumo por proceso para tomar decisiones con base en datos.',
+      category: 'gestion',
       impact: 'alto',
-      icon: <Home className="w-5 h-5" />,
-      completed: false
-    }
+      icon: <Gauge className="w-5 h-5" />,
+      completed: false,
+    },
+    {
+      id: '11',
+      title: 'Mejorar sellado térmico en puertas y ventanas',
+      description:
+        'Reducir infiltraciones de aire ayuda a que los sistemas de climatización trabajen con menor esfuerzo y más estabilidad en ambientes cerrados.',
+      category: 'climatizacion',
+      impact: 'medio',
+      icon: <Wind className="w-5 h-5" />,
+      completed: false,
+    },
+    {
+      id: '12',
+      title: 'Capacitar al personal en hábitos de uso eficiente',
+      description:
+        'Las mejoras tecnológicas funcionan mejor cuando el personal adopta rutinas de ahorro, uso racional de equipos y respuesta oportuna ante alertas del sistema.',
+      category: 'general',
+      impact: 'medio',
+      icon: <Leaf className="w-5 h-5" />,
+      completed: false,
+    },
   ]);
 
-  const [filter, setFilter] = useState<'all' | 'iluminacion' | 'climatizacion' | 'electrodomesticos' | 'general'>('all');
+  const [filter, setFilter] = useState<
+    'all' | 'iluminacion' | 'climatizacion' | 'equipos' | 'gestion' | 'general'
+  >('all');
 
   const toggleRecommendation = (id: string) => {
-    setRecommendations(prev =>
-      prev.map(rec =>
+    setRecommendations((prev) =>
+      prev.map((rec) =>
         rec.id === id ? { ...rec, completed: !rec.completed } : rec
       )
     );
   };
 
-  const filteredRecommendations = filter === 'all'
-    ? recommendations
-    : recommendations.filter(rec => rec.category === filter);
+  const filteredRecommendations =
+    filter === 'all'
+      ? recommendations
+      : recommendations.filter((rec) => rec.category === filter);
 
-  const completedCount = recommendations.filter(rec => rec.completed).length;
+  const completedCount = recommendations.filter((rec) => rec.completed).length;
   const completionPercentage = (completedCount / recommendations.length) * 100;
 
   const getImpactColor = (impact: Recommendation['impact']) => {
     switch (impact) {
       case 'alto':
-        return 'bg-[#32a852] text-white';
+        return 'bg-emerald-600 text-white';
       case 'medio':
-        return 'bg-[#0077b6] text-white';
+        return 'bg-blue-600 text-white';
       case 'bajo':
-        return 'bg-gray-500 text-white';
+        return 'bg-slate-500 text-white';
+      default:
+        return 'bg-slate-500 text-white';
     }
   };
 
@@ -147,14 +195,16 @@ export default function Recommendations({ onNavigate, isDarkMode }: Recommendati
       case 'alto':
         return 'Alto impacto';
       case 'medio':
-        return 'Medio impacto';
+        return 'Impacto medio';
       case 'bajo':
         return 'Bajo impacto';
+      default:
+        return 'Impacto';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <motion.div
@@ -162,14 +212,18 @@ export default function Recommendations({ onNavigate, isDarkMode }: Recommendati
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl text-gray-900 dark:text-white mb-2">Recomendaciones Sostenibles</h1>
-          <p className="text-gray-600 dark:text-gray-400">Tips prácticos para reducir tu consumo eléctrico</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+            Recomendaciones Energéticas
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400">
+            Acciones sugeridas para optimizar el consumo energético en ProyectoGrado
+          </p>
         </motion.div>
 
         {/* Navigation */}
         <div className="flex gap-2 flex-wrap mt-6">
           <Button onClick={() => onNavigate('dashboard')} variant="outline">
-            Panel Principal
+            Dashboard
           </Button>
           <Button onClick={() => onNavigate('statistics')} variant="outline">
             Estadísticas
@@ -177,7 +231,10 @@ export default function Recommendations({ onNavigate, isDarkMode }: Recommendati
           <Button onClick={() => onNavigate('alerts')} variant="outline">
             Alertas
           </Button>
-          <Button onClick={() => onNavigate('recommendations')} className="bg-[#32a852] hover:bg-[#2a8f46]">
+          <Button
+            onClick={() => onNavigate('recommendations')}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             Recomendaciones
           </Button>
           <Button onClick={() => onNavigate('environmental')} variant="outline">
@@ -189,28 +246,30 @@ export default function Recommendations({ onNavigate, isDarkMode }: Recommendati
       {/* Main Content */}
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Progress Card */}
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <Card className="dark:bg-slate-800 dark:border-slate-700">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 dark:text-white">
-              <Leaf className="w-5 h-5 text-[#32a852]" />
-              Tu Progreso
+              <Leaf className="w-5 h-5 text-emerald-600" />
+              Avance de implementación
             </CardTitle>
-            <CardDescription className="dark:text-gray-400">
-              Has completado {completedCount} de {recommendations.length} recomendaciones
+            <CardDescription className="dark:text-slate-400">
+              Has marcado {completedCount} de {recommendations.length} acciones recomendadas
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Progreso</span>
-                <span className="text-gray-900 dark:text-white">{completionPercentage.toFixed(0)}%</span>
+                <span className="text-slate-600 dark:text-slate-400">Progreso</span>
+                <span className="text-slate-900 dark:text-white">
+                  {completionPercentage.toFixed(0)}%
+                </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-[#32a852] to-[#0077b6]"
+                  className="h-full bg-gradient-to-r from-emerald-600 to-blue-600"
                   initial={{ width: 0 }}
                   animate={{ width: `${completionPercentage}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
+                  transition={{ duration: 1, ease: 'easeOut' }}
                 />
               </div>
             </div>
@@ -218,7 +277,7 @@ export default function Recommendations({ onNavigate, isDarkMode }: Recommendati
         </Card>
 
         {/* Filter Buttons */}
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <Card className="dark:bg-slate-800 dark:border-slate-700">
           <CardHeader>
             <CardTitle className="dark:text-white">Categorías</CardTitle>
           </CardHeader>
@@ -226,30 +285,49 @@ export default function Recommendations({ onNavigate, isDarkMode }: Recommendati
             <Button
               variant={filter === 'all' ? 'default' : 'outline'}
               onClick={() => setFilter('all')}
-              className={filter === 'all' ? 'bg-[#0077b6] hover:bg-[#005f93]' : ''}
+              className={filter === 'all' ? 'bg-blue-600 hover:bg-blue-700' : ''}
             >
               Todas ({recommendations.length})
             </Button>
+
             <Button
               variant={filter === 'iluminacion' ? 'default' : 'outline'}
               onClick={() => setFilter('iluminacion')}
-              className={filter === 'iluminacion' ? 'bg-[#0077b6] hover:bg-[#005f93]' : ''}
+              className={filter === 'iluminacion' ? 'bg-blue-600 hover:bg-blue-700' : ''}
             >
-              Iluminación ({recommendations.filter(r => r.category === 'iluminacion').length})
+              Iluminación ({recommendations.filter((r) => r.category === 'iluminacion').length})
             </Button>
+
             <Button
               variant={filter === 'climatizacion' ? 'default' : 'outline'}
               onClick={() => setFilter('climatizacion')}
-              className={filter === 'climatizacion' ? 'bg-[#0077b6] hover:bg-[#005f93]' : ''}
+              className={filter === 'climatizacion' ? 'bg-blue-600 hover:bg-blue-700' : ''}
             >
-              Climatización ({recommendations.filter(r => r.category === 'climatizacion').length})
+              Climatización ({recommendations.filter((r) => r.category === 'climatizacion').length})
             </Button>
+
             <Button
-              variant={filter === 'electrodomesticos' ? 'default' : 'outline'}
-              onClick={() => setFilter('electrodomesticos')}
-              className={filter === 'electrodomesticos' ? 'bg-[#0077b6] hover:bg-[#005f93]' : ''}
+              variant={filter === 'equipos' ? 'default' : 'outline'}
+              onClick={() => setFilter('equipos')}
+              className={filter === 'equipos' ? 'bg-blue-600 hover:bg-blue-700' : ''}
             >
-              Electrodomésticos ({recommendations.filter(r => r.category === 'electrodomesticos').length})
+              Equipos ({recommendations.filter((r) => r.category === 'equipos').length})
+            </Button>
+
+            <Button
+              variant={filter === 'gestion' ? 'default' : 'outline'}
+              onClick={() => setFilter('gestion')}
+              className={filter === 'gestion' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+            >
+              Gestión ({recommendations.filter((r) => r.category === 'gestion').length})
+            </Button>
+
+            <Button
+              variant={filter === 'general' ? 'default' : 'outline'}
+              onClick={() => setFilter('general')}
+              className={filter === 'general' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+            >
+              General ({recommendations.filter((r) => r.category === 'general').length})
             </Button>
           </CardContent>
         </Card>
@@ -261,22 +339,30 @@ export default function Recommendations({ onNavigate, isDarkMode }: Recommendati
               key={rec.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.06 }}
             >
-              <Card 
-                className={`cursor-pointer transition-all hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 ${
-                  rec.completed ? 'opacity-75 border-[#32a852] dark:border-[#32a852]' : ''
+              <Card
+                className={`cursor-pointer transition-all hover:shadow-lg dark:bg-slate-800 dark:border-slate-700 ${
+                  rec.completed ? 'opacity-80 border-emerald-600 dark:border-emerald-600' : ''
                 }`}
                 onClick={() => toggleRecommendation(rec.id)}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${rec.completed ? 'bg-[#32a852] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+                      <div
+                        className={`p-2 rounded-lg ${
+                          rec.completed
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
                         {rec.icon}
                       </div>
                       <div>
-                        <CardTitle className={`text-lg ${rec.completed ? 'line-through' : ''} dark:text-white`}>
+                        <CardTitle
+                          className={`text-lg ${rec.completed ? 'line-through' : ''} dark:text-white`}
+                        >
                           {rec.title}
                         </CardTitle>
                         <Badge className={`mt-1 ${getImpactColor(rec.impact)}`}>
@@ -284,19 +370,25 @@ export default function Recommendations({ onNavigate, isDarkMode }: Recommendati
                         </Badge>
                       </div>
                     </div>
+
                     {rec.completed && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="bg-[#32a852] text-white rounded-full p-1"
+                        className="bg-emerald-600 text-white rounded-full p-1"
                       >
                         <Check className="w-4 h-4" />
                       </motion.div>
                     )}
                   </div>
                 </CardHeader>
+
                 <CardContent>
-                  <p className={`text-sm text-gray-600 dark:text-gray-400 ${rec.completed ? 'line-through' : ''}`}>
+                  <p
+                    className={`text-sm text-slate-600 dark:text-slate-400 ${
+                      rec.completed ? 'line-through' : ''
+                    }`}
+                  >
                     {rec.description}
                   </p>
                 </CardContent>

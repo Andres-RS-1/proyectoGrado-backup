@@ -11,74 +11,102 @@ import { Toaster } from './components/ui/sonner';
 export interface User {
   name: string;
   email: string;
-  type: 'hogar' | 'local';
+  type: 'pyme' | 'industrial';
 }
 
 export interface ConsumptionData {
   id_usuario: string;
   fecha: Date;
-  consumo_watts: number;
+  consumo_kwh: number;
+  costo_cop: number;
   voltaje: number;
   corriente: number;
 }
 
+export type AppScreen =
+  | 'dashboard'
+  | 'statistics'
+  | 'alerts'
+  | 'recommendations'
+  | 'environmental';
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [deviceSetupComplete, setDeviceSetupComplete] = useState(false);
-  const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'statistics' | 'alerts' | 'recommendations' | 'environmental'>('dashboard');
+  const [currentScreen, setCurrentScreen] = useState<AppScreen>('dashboard');
   const [consumptionData, setConsumptionData] = useState<ConsumptionData[]>([]);
   const [isSimulationMode, setIsSimulationMode] = useState(true);
-  const [threshold, setThreshold] = useState(1000);
+  const [threshold, setThreshold] = useState(25);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Simulate IoT data
-  useEffect(() => {
-    if (!user || !isSimulationMode) return;
-
-    const interval = setInterval(() => {
-      const newData: ConsumptionData = {
-        id_usuario: user.email,
-        fecha: new Date(),
-        consumo_watts: Math.floor(Math.random() * 1500) + 300,
-        voltaje: 110 + Math.random() * 10,
-        corriente: (Math.random() * 15) + 2
-      };
-
-      setConsumptionData(prev => {
-        const newArray = [...prev, newData];
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        return newArray.filter(d => d.fecha > oneDayAgo);
-      });
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [user, isSimulationMode]);
-
-  // Generate initial historical data
   useEffect(() => {
     if (!user) return;
 
-    const historicalData: ConsumptionData[] = [];
     const now = new Date();
-    
-    for (let i = 30; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const historicalData: ConsumptionData[] = [];
+
+    for (let dayOffset = 90; dayOffset >= 0; dayOffset--) {
+      const baseDate = new Date(now.getTime() - dayOffset * 24 * 60 * 60 * 1000);
+
       for (let hour = 0; hour < 24; hour++) {
-        const dataPoint = new Date(date);
-        dataPoint.setHours(hour);
-        
+        const timestamp = new Date(baseDate);
+        timestamp.setHours(hour, 0, 0, 0);
+
+        const isBusinessHour = hour >= 7 && hour <= 18;
+        const baseConsumption = user.type === 'industrial' ? 4.5 : 2.2;
+        const variableConsumption = isBusinessHour
+          ? Math.random() * (user.type === 'industrial' ? 5.5 : 2.8)
+          : Math.random() * (user.type === 'industrial' ? 2.2 : 1.2);
+
+        const consumo_kwh = Number((baseConsumption + variableConsumption).toFixed(2));
+        const costo_cop = Math.round(consumo_kwh * 750);
+
         historicalData.push({
           id_usuario: user.email,
-          fecha: dataPoint,
-          consumo_watts: Math.floor(Math.random() * 1500) + 300,
-          voltaje: 110 + Math.random() * 10,
-          corriente: (Math.random() * 15) + 2
+          fecha: timestamp,
+          consumo_kwh,
+          costo_cop,
+          voltaje: Number((220 + Math.random() * 15).toFixed(2)),
+          corriente: Number((15 + Math.random() * 45).toFixed(2)),
         });
       }
     }
 
-    setConsumptionData(historicalData);
+    setConsumptionData(historicalData.slice(-5000));
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !deviceSetupComplete || !isSimulationMode) return;
+
+    const interval = setInterval(() => {
+      const currentHour = new Date().getHours();
+      const isBusinessHour = currentHour >= 7 && currentHour <= 18;
+
+      const baseConsumption = user.type === 'industrial' ? 6 : 3;
+      const variableConsumption = isBusinessHour
+        ? Math.random() * (user.type === 'industrial' ? 6 : 3.5)
+        : Math.random() * (user.type === 'industrial' ? 2.5 : 1.5);
+
+      const consumo_kwh = Number((baseConsumption + variableConsumption).toFixed(2));
+      const costo_cop = Math.round(consumo_kwh * 750);
+
+      const newData: ConsumptionData = {
+        id_usuario: user.email,
+        fecha: new Date(),
+        consumo_kwh,
+        costo_cop,
+        voltaje: Number((220 + Math.random() * 10).toFixed(2)),
+        corriente: Number((10 + Math.random() * 50).toFixed(2)),
+      };
+
+      setConsumptionData((prev) => {
+        const updated = [...prev, newData];
+        return updated.slice(-5000);
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [user, deviceSetupComplete, isSimulationMode]);
 
   const handleLogin = (userData: User) => {
     setUser(userData);
@@ -94,6 +122,9 @@ export default function App() {
     setDeviceSetupComplete(false);
     setConsumptionData([]);
     setCurrentScreen('dashboard');
+    setIsSimulationMode(true);
+    setThreshold(25);
+    setIsDarkMode(false);
   };
 
   if (!user) {
@@ -108,10 +139,7 @@ export default function App() {
   if (!deviceSetupComplete) {
     return (
       <>
-        <DeviceSetup 
-          onComplete={handleDeviceSetupComplete} 
-          userName={user.name}
-        />
+        <DeviceSetup onComplete={handleDeviceSetupComplete} userName={user.name} />
         <Toaster />
       </>
     );
@@ -119,7 +147,7 @@ export default function App() {
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+      <div className="min-h-screen bg-white dark:bg-slate-900 transition-colors">
         {currentScreen === 'dashboard' && (
           <Dashboard
             user={user}
@@ -128,11 +156,12 @@ export default function App() {
             onNavigate={setCurrentScreen}
             onLogout={handleLogout}
             isSimulationMode={isSimulationMode}
-            onToggleSimulation={() => setIsSimulationMode(!isSimulationMode)}
+            onToggleSimulation={() => setIsSimulationMode((prev) => !prev)}
             isDarkMode={isDarkMode}
-            onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+            onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
           />
         )}
+
         {currentScreen === 'statistics' && (
           <Statistics
             consumptionData={consumptionData}
@@ -140,6 +169,7 @@ export default function App() {
             isDarkMode={isDarkMode}
           />
         )}
+
         {currentScreen === 'alerts' && (
           <Alerts
             consumptionData={consumptionData}
@@ -149,12 +179,14 @@ export default function App() {
             isDarkMode={isDarkMode}
           />
         )}
+
         {currentScreen === 'recommendations' && (
           <Recommendations
             onNavigate={setCurrentScreen}
             isDarkMode={isDarkMode}
           />
         )}
+
         {currentScreen === 'environmental' && (
           <Environmental
             consumptionData={consumptionData}
@@ -162,6 +194,7 @@ export default function App() {
             isDarkMode={isDarkMode}
           />
         )}
+
         <Toaster />
       </div>
     </div>
