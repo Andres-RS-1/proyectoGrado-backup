@@ -96,7 +96,7 @@ export default function Dashboard({
         setSimemError(null);
 
         const response = await fetch(
-  `${API_BASE_URL}/api/simem/bogota-cundinamarca?startDate=2026-05-01&endDate=2026-05-06`
+  `${API_BASE_URL}/api/simem/bogota-cundinamarca`
 );
 
         if (!response.ok) {

@@ -142,6 +142,13 @@ export async function getReservasBogotaCundinamarca(
 ): Promise<SimemReservaRegionalResponse> {
   let response;
 
+console.log("Consultando SIMEM con:", {
+  API_URL,
+  DATASET_ID,
+  startDate,
+  endDate,
+});
+
 try {
   response = await axios.get(API_URL, {
     params: {

@@ -9,8 +9,7 @@ router.get("/bogota-cundinamarca", async (req: Request, res: Response) => {
   try {
     const end = new Date();
     const start = new Date();
-    start.setDate(end.getDate() - 42);
-
+start.setDate(end.getDate() - 7);
     const startDate = String(req.query.startDate || formatDate(start));
     const endDate = String(req.query.endDate || formatDate(end));
 
