@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const DATASET_ID = "c51127";
-const API_URL = process.env.API_URL ?? "https://www.simem.co/backend-files/api/PublicData";
+const API_URL =
+  process.env.API_URL ?? "https://www.simem.co/backend-files/api/PublicData";
 const TARGET_EMBALSES = ["CHUZA", "GUAVIO", "MUNA"];
 
 export interface SimemReservaRegional {

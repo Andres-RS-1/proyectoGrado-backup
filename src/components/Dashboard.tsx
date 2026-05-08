@@ -32,6 +32,9 @@ import {
 import type { ConsumptionData, User } from '../App';
 import { toast } from 'sonner';
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ?? "http://localhost:3001";
+
 interface SimemReservaRegional {
   fecha: string;
   fechaPublicacion: string;
@@ -93,8 +96,8 @@ export default function Dashboard({
         setSimemError(null);
 
         const response = await fetch(
-          '/api/simem/bogota-cundinamarca?startDate=2026-05-01&endDate=2026-05-06'
-        );
+  `${API_BASE_URL}/api/simem/bogota-cundinamarca?startDate=2026-05-01&endDate=2026-05-06`
+);
 
         if (!response.ok) {
           throw new Error(`Error HTTP ${response.status}`);
