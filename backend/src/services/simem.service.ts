@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const DATASET_ID = "c51127";
-const API_URL = "https://www.simem.co/backend-files/api/PublicData";
-
+const API_URL = process.env.API_URL ?? "https://www.simem.co/backend-files/api/PublicData";
 const TARGET_EMBALSES = ["CHUZA", "GUAVIO", "MUNA"];
 
 export interface SimemReservaRegional {
@@ -142,19 +141,19 @@ export async function getReservasBogotaCundinamarca(
 ): Promise<SimemReservaRegionalResponse> {
   let response;
 
-  try {
-    response = await axios.get(API_URL, {
-      params: {
-        datasetId: DATASET_ID,
-        startDate,
-        endDate,
-      },
-      timeout: 20000,
-    });
-  } catch (error: any) {
-    console.error("Error consultando SIMEM:", error.message);
-    throw new Error(`SIMEM no respondió correctamente: ${error.message}`);
-  }
+try {
+  response = await axios.get(API_URL, {
+    params: {
+      datasetId: DATASET_ID,
+      startDate,
+      endDate,
+    },
+    timeout: 20000,
+  });
+} catch (error: any) {
+  console.error("Error consultando SIMEM:", error.message);
+  throw new Error(`SIMEM no respondió correctamente: ${error.message}`);
+}
 
   const payload = response.data;
   const rows: SimemRawRow[] = payload?.result?.records ?? [];
