@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { useEffect, useMemo, useState } from 'react';
 import { Progress } from './ui/progress';
 import {
   BarChart3,
@@ -24,9 +25,35 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from 'recharts';
 import type { ConsumptionData, User } from '../App';
 import { toast } from 'sonner';
+
+interface SimemReservaRegional {
+  fecha: string;
+  fechaPublicacion: string;
+  embalse: string;
+  region: string;
+  volumenUtilDiarioEnergia: number;
+  capacidadUtilEnergia: number;
+  volumenTotalEnergia: number;
+  vertimientosEnergia: number;
+  minimoOperativoSuperior: number;
+  minimoOperativoInferior: number;
+  porcentajeLlenado: number;
+}
+
+interface SimemReservaRegionalResponse {
+  fuente: string;
+  datasetId: string;
+  startDate: string;
+  endDate: string;
+  agregadoBogota: SimemReservaRegional | null;
+  promedioRegional: number;
+  embalsesDetalle: SimemReservaRegional[];
+  historicoEmbalses: SimemReservaRegional[];
+}
 
 interface DashboardProps {
   user: User;
@@ -53,6 +80,38 @@ export default function Dashboard({
   isDarkMode,
   onToggleDarkMode,
 }: DashboardProps) {
+    const [simemData, setSimemData] = useState<SimemReservaRegionalResponse | null>(null);
+  const [simemLoading, setSimemLoading] = useState(true);
+  const [simemError, setSimemError] = useState<string | null>(null);
+
+    useEffect(() => {
+    const fetchSimemData = async () => {
+      try {
+        setSimemLoading(true);
+        setSimemError(null);
+
+const response = await fetch(
+  '/api/simem/bogota-cundinamarca?startDate=2026-05-01&endDate=2026-05-06'
+);
+
+        if (!response.ok) {
+          throw new Error(`Error HTTP ${response.status}`);
+        }
+
+        const result: SimemReservaRegionalResponse = await response.json();
+        setSimemData(result);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'No se pudo cargar SIMEM';
+        setSimemError(message);
+      } finally {
+        setSimemLoading(false);
+      }
+    };
+
+    fetchSimemData();
+  }, []);
+
   const currentData =
     consumptionData.length > 0 ? consumptionData[consumptionData.length - 1] : null;
 
@@ -107,6 +166,39 @@ export default function Dashboard({
   const monthlyTotalCop = lastMonthData.reduce((sum, d) => sum + d.costo_cop, 0);
 
   const isHighConsumption = currentData ? currentData.consumo_kwh > threshold : false;
+
+    const simemEmbalses = simemData?.embalsesDetalle ?? [];
+  const simemHistorico = simemData?.historicoEmbalses ?? [];
+
+  const chuza = simemEmbalses.find((e) => e.embalse.includes('CHUZA'));
+  const guavio = simemEmbalses.find((e) => e.embalse.includes('GUAVIO'));
+  const muna = simemEmbalses.find((e) => e.embalse.includes('MUNA'));
+
+  const simemChartData = useMemo(() => {
+    const grouped = new Map<
+      string,
+      {
+        fecha: string;
+        CHUZA?: number;
+        GUAVIO?: number;
+        MUNA?: number;
+      }
+    >();
+
+    simemHistorico.forEach((item) => {
+      if (!grouped.has(item.fecha)) {
+        grouped.set(item.fecha, { fecha: item.fecha });
+      }
+
+      const row = grouped.get(item.fecha)!;
+
+      if (item.embalse.includes('CHUZA')) row.CHUZA = item.porcentajeLlenado;
+      if (item.embalse.includes('GUAVIO')) row.GUAVIO = item.porcentajeLlenado;
+      if (item.embalse.includes('MUNA')) row.MUNA = item.porcentajeLlenado;
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => a.fecha.localeCompare(b.fecha));
+  }, [simemHistorico]);
 
   const thresholdProgress = currentData
     ? Math.min((currentData.consumo_kwh / threshold) * 100, 100)
@@ -399,12 +491,318 @@ export default function Dashboard({
           </Card>
         </motion.div>
 
+        {/* SECCIÓN SIMEM - Reservas Hídricas */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="lg:col-span-3"
+        >
+          <Card className="dark:bg-slate-800 dark:border-slate-700 shadow-xl border-0 bg-gradient-to-br from-white to-sky-50 dark:from-slate-800 dark:to-slate-900">
+            <CardHeader>
+              <CardTitle className="dark:text-white flex items-center gap-2 text-2xl">
+                <Database className="w-6 h-6 text-cyan-600" />
+                Reservas Hídricas SIN
+              </CardTitle>
+              <CardDescription className="dark:text-slate-400">
+                Embalses Bogotá-Cundinamarca | SIMEM - XM | {simemData?.startDate} - {simemData?.endDate}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              {simemLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+                  <p className="text-slate-500 dark:text-slate-400">Cargando datos hídricos...</p>
+                </div>
+              ) : simemError ? (
+                <div className="flex items-center gap-3 p-6 bg-rose-50 border border-rose-200 dark:bg-rose-950/50 dark:border-rose-800 rounded-2xl">
+                  <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/50 rounded-xl flex items-center justify-center">
+                    <WifiOff className="w-6 h-6 text-rose-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-rose-800 dark:text-rose-300">Error SIMEM</p>
+                    <p className="text-sm text-rose-700 dark:text-rose-400">{simemError}</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* KPIs SIMEM */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card className="dark:bg-slate-900 dark:border-slate-700 border border-slate-200/50">
+                      <CardContent className="p-6">
+                        <p className="text-xs uppercase tracking-wide text-slate-500 mb-2 font-medium">
+                          Promedio Regional
+                        </p>
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                          {simemData?.promedioRegional.toFixed(1)}%
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                          {simemEmbalses.length} embalses
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    {[
+  { embalse: chuza, label: 'CHUZA', color: 'text-blue-600' },
+  { embalse: guavio, label: 'GUAVIO', color: 'text-emerald-600' },
+  { embalse: muna, label: 'MUNA', color: 'text-purple-600' },
+].map(({ embalse, label, color }) => (
+                      <Card
+                        key={label}
+                        className="dark:bg-slate-900 dark:border-slate-700 border border-slate-200/50 group hover:shadow-xl transition-all"
+                      >
+                        <CardContent className="p-6 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className={`text-sm font-semibold ${color}`}>
+                              {label}
+                            </p>
+                            <Badge variant="outline" className="text-xs">
+                              {embalse?.region ?? '--'}
+                            </Badge>
+                          </div>
+
+                          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                            {embalse ? `${embalse.porcentajeLlenado}%` : '–'}
+                          </div>
+
+                          <Progress
+                            value={embalse?.porcentajeLlenado ?? 0}
+                            className="h-2"
+                          />
+
+                          <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                            <div>
+                              Vol: {embalse ? (embalse.volumenUtilDiarioEnergia / 1e6).toFixed(1) : '--'} MWh
+                            </div>
+                            <div className="text-slate-400">
+                              {embalse?.fechaPublicacion ?? '--'}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Gráfica SIMEM */}
+                  <div className="h-[380px] rounded-2xl bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900/50 dark:to-slate-800/50 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
+                          Evolución % Llenado
+                        </h4>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          {simemData?.startDate} - {simemData?.endDate}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {simemHistorico.length} días
+                      </Badge>
+                    </div>
+
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={simemChartData}>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke={isDarkMode ? 'hsl(215 25% 22%)' : 'hsl(210 20% 90%)'}
+                        />
+                        <XAxis
+                          dataKey="fecha"
+                          stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
+                          tick={{ fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)', fontSize: 11 }}
+                          tickFormatter={(value) => value.slice(5, 10)}
+                        />
+                        <YAxis
+                          domain={[0, 100]}
+                          stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
+                          tick={{ fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)', fontSize: 11 }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+                            border: '1px solid hsl(210 40% 80%)',
+                            borderRadius: '12px',
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="CHUZA"
+                          name="CHUZA"
+                          stroke="#3b82f6"
+                          strokeWidth={3}
+                          dot={{ r: 4, fill: '#dbeafe' }}
+                          connectNulls
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="GUAVIO"
+                          name="GUAVIO"
+                          stroke="#10b981"
+                          strokeWidth={3}
+                          dot={{ r: 4, fill: '#dcfce7' }}
+                          connectNulls
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="MUNA"
+                          name="MUNA"
+                          stroke="#8b5cf6"
+                          strokeWidth={3}
+                          dot={{ r: 4, fill: '#ede9fe' }}
+                          connectNulls
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:col-span-3"
         >
+
+                <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="lg:col-span-3"
+        >
+          <Card className="dark:bg-slate-800 dark:border-slate-700 shadow-xl border-0 bg-gradient-to-br from-white to-sky-50 dark:from-slate-800 dark:to-slate-900">
+            <CardHeader>
+              <CardTitle className="dark:text-white flex items-center gap-2 text-2xl">
+                <Database className="w-6 h-6 text-cyan-600" />
+                Estado hídrico Bogotá-Cundinamarca
+              </CardTitle>
+              <CardDescription className="dark:text-slate-400">
+                Fuente SIMEM - XM | Embalses CHUZA, GUAVIO y MUNA
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              {simemLoading ? (
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  Cargando datos hídricos...
+                </div>
+              ) : simemError ? (
+                <div className="text-sm text-rose-600 dark:text-rose-400">
+                  Error al cargar SIMEM: {simemError}
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card className="dark:bg-slate-900 dark:border-slate-700 border border-slate-200">
+                      <CardContent className="p-5">
+                        <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                          Promedio regional
+                        </p>
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                          {simemData?.promedioRegional.toFixed(2)}%
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Último corte disponible
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    {[chuza, guavio, muna].map((embalse) => (
+                      <Card
+                        key={embalse?.embalse}
+                        className="dark:bg-slate-900 dark:border-slate-700 border border-slate-200"
+                      >
+                        <CardContent className="p-5 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                              {embalse?.embalse ?? 'Sin dato'}
+                            </p>
+                            <Badge variant="secondary">{embalse?.region ?? '--'}</Badge>
+                          </div>
+
+                          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                            {embalse ? `${embalse.porcentajeLlenado}%` : '--'}
+                          </p>
+
+                          <Progress value={embalse?.porcentajeLlenado ?? 0} className="h-2" />
+
+                          <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                            <p>
+                              Volumen: {embalse ? (embalse.volumenUtilDiarioEnergia / 1e6).toFixed(1) : '--'} MWh
+                            </p>
+                            <p>
+                              Fecha: {embalse?.fecha ?? '--'}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="h-[360px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={simemChartData}>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke={isDarkMode ? 'hsl(215 25% 22%)' : 'hsl(210 20% 90%)'}
+                        />
+                        <XAxis
+                          dataKey="fecha"
+                          stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
+                          tick={{
+                            fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)',
+                            fontSize: 12,
+                          }}
+                        />
+                        <YAxis
+                          domain={[0, 100]}
+                          stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
+                          tick={{
+                            fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)',
+                            fontSize: 12,
+                          }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+                            border: '1px solid hsl(210 40% 80%)',
+                            borderRadius: '12px',
+                            color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                          }}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="CHUZA"
+                          stroke="#3b82f6"
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="GUAVIO"
+                          stroke="#10b981"
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="MUNA"
+                          stroke="#8b5cf6"
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
           <Card className="dark:bg-slate-800 dark:border-slate-700 group hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm dark:text-white flex items-center gap-2">

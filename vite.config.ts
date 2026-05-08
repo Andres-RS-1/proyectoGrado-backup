@@ -1,20 +1,17 @@
-import { defineConfig } from 'vite'
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
-import babel from '@rolldown/plugin-babel'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
 export default defineConfig({
-  base: '/proyectoGrado-backup/',  // ← GitHub Pages path
-  plugins: [
-    react(),
-    babel({ presets: [reactCompilerPreset()] })
-  ],
-  build: {
-    outDir: 'dist',  // GitHub Pages lee aquí
-    sourcemap: true  // Debug
-  },
+  plugins: [react()],
   server: {
+    host: '0.0.0.0',
     port: 5173,
-    host: true
-  }
-})
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});

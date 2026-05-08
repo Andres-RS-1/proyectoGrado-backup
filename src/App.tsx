@@ -8,6 +8,8 @@ import Recommendations from './components/Recommendations';
 import Environmental from './components/Environmental';
 import { Toaster } from './components/ui/sonner';
 
+
+
 export interface User {
   name: string;
   email: string;
