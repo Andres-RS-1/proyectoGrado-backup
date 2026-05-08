@@ -3,10 +3,16 @@ import { getReservasBogotaCundinamarca } from "../services/simem.service";
 
 const router = Router();
 
+const formatDate = (date: Date) => date.toISOString().split("T")[0];
+
 router.get("/bogota-cundinamarca", async (req: Request, res: Response) => {
   try {
-    const startDate = String(req.query.startDate || "2026-05-01");
-    const endDate = String(req.query.endDate || "2026-05-06");
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 42);
+
+    const startDate = String(req.query.startDate || formatDate(start));
+    const endDate = String(req.query.endDate || formatDate(end));
 
     const data = await getReservasBogotaCundinamarca(startDate, endDate);
 

@@ -43,10 +43,13 @@ export default function Environmental({
     const totalConsumption = currentMonthData.reduce((sum, d) => sum + d.consumo_kwh, 0);
     const totalCost = currentMonthData.reduce((sum, d) => sum + d.costo_cop, 0);
 
-    const savedKwh = Math.max(0, baselineConsumption - totalConsumption);
-    const co2Avoided = savedKwh * co2Factor;
-    const treesEquivalent = co2Avoided / 1.75;
-    const carKmEquivalent = co2Avoided / 0.12;
+    const energyDelta = baselineConsumption - totalConsumption;
+const savedKwh = Math.max(0, energyDelta);
+const excessKwh = Math.max(0, -energyDelta);
+const co2Avoided = savedKwh * co2Factor;
+const co2Excess = excessKwh * co2Factor;
+const treesEquivalent = co2Avoided / 1.75;
+const carKmEquivalent = co2Avoided / 0.12;
 
     return {
       totalConsumption: Number(totalConsumption.toFixed(2)),
@@ -56,6 +59,8 @@ export default function Environmental({
       co2Avoided: Number(co2Avoided.toFixed(2)),
       treesEquivalent: Number(treesEquivalent.toFixed(1)),
       carKmEquivalent: Number(carKmEquivalent.toFixed(1)),
+      excessKwh: Number(excessKwh.toFixed(2)),
+co2Excess: Number(co2Excess.toFixed(2)),
     };
   }, [consumptionData]);
 
@@ -157,8 +162,14 @@ export default function Environmental({
                 >
                   <div className="bg-white/20 backdrop-blur-sm p-6 rounded-2xl">
                     <div className="text-5xl mb-3">🌿</div>
-                    <p className="text-4xl font-bold mb-2">{environmentalMetrics.co2Avoided}</p>
-                    <p className="text-lg">kg CO₂ evitados</p>
+                    <p className="text-4xl font-bold mb-2">
+  {environmentalMetrics.co2Avoided > 0
+    ? `${environmentalMetrics.co2Avoided}`
+    : `${environmentalMetrics.co2Excess}`}
+</p>
+<p className="text-lg">
+  {environmentalMetrics.co2Avoided > 0 ? 'kg CO₂ evitados' : 'kg CO₂ por encima de la base'}
+</p>
                   </div>
                 </motion.div>
 

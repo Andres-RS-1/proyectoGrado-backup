@@ -20,6 +20,8 @@ import { motion } from 'motion/react';
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -80,19 +82,19 @@ export default function Dashboard({
   isDarkMode,
   onToggleDarkMode,
 }: DashboardProps) {
-    const [simemData, setSimemData] = useState<SimemReservaRegionalResponse | null>(null);
+  const [simemData, setSimemData] = useState<SimemReservaRegionalResponse | null>(null);
   const [simemLoading, setSimemLoading] = useState(true);
   const [simemError, setSimemError] = useState<string | null>(null);
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchSimemData = async () => {
       try {
         setSimemLoading(true);
         setSimemError(null);
 
-const response = await fetch(
-  '/api/simem/bogota-cundinamarca?startDate=2026-05-01&endDate=2026-05-06'
-);
+        const response = await fetch(
+          '/api/simem/bogota-cundinamarca?startDate=2026-05-01&endDate=2026-05-06'
+        );
 
         if (!response.ok) {
           throw new Error(`Error HTTP ${response.status}`);
@@ -118,39 +120,78 @@ const response = await fetch(
   const currentConsumptionKwh = currentData ? currentData.consumo_kwh.toFixed(2) : '0.00';
   const currentCostCop = currentData ? currentData.costo_cop.toFixed(0) : '0';
 
-  const monthlyChartMap = new Map<
-    string,
-    { month: string; consumo: number; costo: number; order: number }
-  >();
+  const weeklyChartMap = new Map<
+  string,
+  { week: string; consumo: number; costo: number; order: number }
+>();
 
-  consumptionData.forEach((d) => {
+const getWeekStart = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff));
+};
+
+consumptionData.forEach((d) => {
+  const date = new Date(d.fecha);
+  const weekStart = getWeekStart(date);
+  const key = weekStart.toISOString().split('T')[0];
+  const weekLabel = weekStart.toLocaleDateString('es-CO', {
+    day: '2-digit',
+    month: 'short',
+  });
+  const order = weekStart.getTime();
+
+  if (!weeklyChartMap.has(key)) {
+    weeklyChartMap.set(key, {
+      week: `Semana ${weekLabel}`,
+      consumo: 0,
+      costo: 0,
+      order,
+    });
+  }
+
+  const currentWeek = weeklyChartMap.get(key)!;
+  currentWeek.consumo += d.consumo_kwh;
+  currentWeek.costo += d.costo_cop;
+});
+
+const chartDataLastWeeks = Array.from(weeklyChartMap.values())
+  .sort((a, b) => a.order - b.order)
+  .slice(-6)
+  .map(({ week, consumo, costo }) => ({
+    week,
+    consumo: Number(consumo.toFixed(2)),
+    costo: Number(costo.toFixed(0)),
+  }));
+
+  const now = new Date();
+  const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const lastMonthConsumption = consumptionData.filter((d) => {
     const date = new Date(d.fecha);
-    const key = `${date.getFullYear()}-${date.getMonth()}`;
-    const monthLabel = date.toLocaleDateString('es-CO', { month: 'short' });
-    const order = date.getFullYear() * 12 + date.getMonth();
-
-    if (!monthlyChartMap.has(key)) {
-      monthlyChartMap.set(key, {
-        month: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
-        consumo: 0,
-        costo: 0,
-        order,
-      });
-    }
-
-    const currentMonth = monthlyChartMap.get(key)!;
-    currentMonth.consumo += d.consumo_kwh;
-    currentMonth.costo += d.costo_cop;
+    return date >= startOfCurrentMonth && date < startOfNextMonth;
   });
 
-  const chartData = Array.from(monthlyChartMap.values())
-    .sort((a, b) => a.order - b.order)
-    .slice(-6)
-    .map(({ month, consumo, costo }) => ({
-      month,
-      consumo: Number(consumo.toFixed(2)),
-      costo: Number(costo.toFixed(0)),
-    }));
+  const lastMonthChartData = lastMonthConsumption.reduce<
+    { day: string; consumo: number }[]
+  >((acc, d) => {
+    const day = new Date(d.fecha).toLocaleDateString('es-CO', {
+      day: '2-digit',
+      month: 'short',
+    });
+
+    const existing = acc.find((x) => x.day === day);
+
+    if (existing) {
+      existing.consumo += d.consumo_kwh;
+    } else {
+      acc.push({ day, consumo: d.consumo_kwh });
+    }
+
+    return acc;
+  }, []);
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const last7DaysData = consumptionData.filter((d) => d.fecha > sevenDaysAgo);
@@ -167,38 +208,60 @@ const response = await fetch(
 
   const isHighConsumption = currentData ? currentData.consumo_kwh > threshold : false;
 
-    const simemEmbalses = simemData?.embalsesDetalle ?? [];
+  const simemEmbalses = simemData?.embalsesDetalle ?? [];
   const simemHistorico = simemData?.historicoEmbalses ?? [];
 
   const chuza = simemEmbalses.find((e) => e.embalse.includes('CHUZA'));
   const guavio = simemEmbalses.find((e) => e.embalse.includes('GUAVIO'));
   const muna = simemEmbalses.find((e) => e.embalse.includes('MUNA'));
 
-  const simemChartData = useMemo(() => {
-    const grouped = new Map<
-      string,
-      {
-        fecha: string;
-        CHUZA?: number;
-        GUAVIO?: number;
-        MUNA?: number;
-      }
-    >();
+  const simemBarData = [
+    { embalse: 'CHUZA', porcentaje: chuza?.porcentajeLlenado ?? 0 },
+    { embalse: 'GUAVIO', porcentaje: guavio?.porcentajeLlenado ?? 0 },
+    { embalse: 'MUNA', porcentaje: muna?.porcentajeLlenado ?? 0 },
+  ];
 
-    simemHistorico.forEach((item) => {
-      if (!grouped.has(item.fecha)) {
-        grouped.set(item.fecha, { fecha: item.fecha });
-      }
+const simemChartData = useMemo(() => {
+  const sixWeeksAgo = new Date();
+  sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42);
 
-      const row = grouped.get(item.fecha)!;
+  const recentHistorico = simemHistorico.filter((item) => {
+    const itemDate = new Date(item.fecha);
+    return itemDate >= sixWeeksAgo;
+  });
 
-      if (item.embalse.includes('CHUZA')) row.CHUZA = item.porcentajeLlenado;
-      if (item.embalse.includes('GUAVIO')) row.GUAVIO = item.porcentajeLlenado;
-      if (item.embalse.includes('MUNA')) row.MUNA = item.porcentajeLlenado;
-    });
+  const grouped = new Map<
+    string,
+    {
+      fecha: string;
+      CHUZA?: number;
+      GUAVIO?: number;
+      MUNA?: number;
+    }
+  >();
 
-    return Array.from(grouped.values()).sort((a, b) => a.fecha.localeCompare(b.fecha));
-  }, [simemHistorico]);
+  recentHistorico.forEach((item) => {
+    if (!grouped.has(item.fecha)) {
+      grouped.set(item.fecha, { fecha: item.fecha });
+    }
+
+    const row = grouped.get(item.fecha)!;
+
+    if (item.embalse.includes('CHUZA')) row.CHUZA = item.porcentajeLlenado;
+    if (item.embalse.includes('GUAVIO')) row.GUAVIO = item.porcentajeLlenado;
+    if (item.embalse.includes('MUNA')) row.MUNA = item.porcentajeLlenado;
+  });
+
+  return Array.from(grouped.values())
+    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+    .map((row) => ({
+      ...row,
+      fechaLabel: new Date(row.fecha).toLocaleDateString('es-CO', {
+        day: '2-digit',
+        month: 'short',
+      }),
+    }));
+}, [simemHistorico]);
 
   const thresholdProgress = currentData
     ? Math.min((currentData.consumo_kwh / threshold) * 100, 100)
@@ -424,7 +487,7 @@ const response = await fetch(
           <Card className="h-[420px] dark:bg-slate-800 dark:border-slate-700 shadow-xl">
             <CardHeader>
               <CardTitle className="dark:text-white flex items-center gap-2">
-                Evolución 4 meses | {monthlyTotalKwh.toFixed(1)} kWh total
+                Evolución últimas semanas | {monthlyTotalKwh.toFixed(1)} kWh total
               </CardTitle>
               <CardDescription className="dark:text-slate-400">
                 Consumo reciente en kWh
@@ -433,13 +496,13 @@ const response = await fetch(
 
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
+                <LineChart data={chartDataLastWeeks}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke={isDarkMode ? 'hsl(215 25% 22%)' : 'hsl(210 20% 90%)'}
                   />
                   <XAxis
-                    dataKey="month"
+                    dataKey="week"
                     stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
                     tick={{
                       fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)',
@@ -491,7 +554,6 @@ const response = await fetch(
           </Card>
         </motion.div>
 
-        {/* SECCIÓN SIMEM - Reservas Hídricas */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -527,7 +589,6 @@ const response = await fetch(
                 </div>
               ) : (
                 <>
-                  {/* KPIs SIMEM */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <Card className="dark:bg-slate-900 dark:border-slate-700 border border-slate-200/50">
                       <CardContent className="p-6">
@@ -544,10 +605,10 @@ const response = await fetch(
                     </Card>
 
                     {[
-  { embalse: chuza, label: 'CHUZA', color: 'text-blue-600' },
-  { embalse: guavio, label: 'GUAVIO', color: 'text-emerald-600' },
-  { embalse: muna, label: 'MUNA', color: 'text-purple-600' },
-].map(({ embalse, label, color }) => (
+                      { embalse: chuza, label: 'CHUZA', color: 'text-blue-600' },
+                      { embalse: guavio, label: 'GUAVIO', color: 'text-emerald-600' },
+                      { embalse: muna, label: 'MUNA', color: 'text-purple-600' },
+                    ].map(({ embalse, label, color }) => (
                       <Card
                         key={label}
                         className="dark:bg-slate-900 dark:border-slate-700 border border-slate-200/50 group hover:shadow-xl transition-all"
@@ -584,162 +645,52 @@ const response = await fetch(
                     ))}
                   </div>
 
-                  {/* Gráfica SIMEM */}
-                  <div className="h-[380px] rounded-2xl bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900/50 dark:to-slate-800/50 p-6">
+                  <div className="h-[300px] rounded-2xl bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900/50 dark:to-slate-800/50 p-6">
                     <div className="flex items-center justify-between mb-6">
                       <div>
                         <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
-                          Evolución % Llenado
+                          Último corte por embalse
                         </h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                          {simemData?.startDate} - {simemData?.endDate}
-                        </p>
+  Tendencia de la última semana
+</p>
                       </div>
-                      <Badge variant="outline" className="text-xs">
-                        {simemHistorico.length} días
-                      </Badge>
                     </div>
 
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={simemChartData}>
+                      <BarChart data={simemBarData}>
                         <CartesianGrid
                           strokeDasharray="3 3"
                           stroke={isDarkMode ? 'hsl(215 25% 22%)' : 'hsl(210 20% 90%)'}
                         />
                         <XAxis
-                          dataKey="fecha"
+                          dataKey="embalse"
                           stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
-                          tick={{ fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)', fontSize: 11 }}
-                          tickFormatter={(value) => value.slice(5, 10)}
+                          tick={{
+                            fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)',
+                            fontSize: 12,
+                          }}
                         />
                         <YAxis
                           domain={[0, 100]}
                           stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
-                          tick={{ fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)', fontSize: 11 }}
+                          tick={{
+                            fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)',
+                            fontSize: 12,
+                          }}
                         />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
                             border: '1px solid hsl(210 40% 80%)',
                             borderRadius: '12px',
+                            color: isDarkMode ? '#f1f5f9' : '#0f172a',
                           }}
+                          formatter={(value) => [`${value}%`, 'Llenado']}
                         />
-                        <Line
-                          type="monotone"
-                          dataKey="CHUZA"
-                          name="CHUZA"
-                          stroke="#3b82f6"
-                          strokeWidth={3}
-                          dot={{ r: 4, fill: '#dbeafe' }}
-                          connectNulls
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="GUAVIO"
-                          name="GUAVIO"
-                          stroke="#10b981"
-                          strokeWidth={3}
-                          dot={{ r: 4, fill: '#dcfce7' }}
-                          connectNulls
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="MUNA"
-                          name="MUNA"
-                          stroke="#8b5cf6"
-                          strokeWidth={3}
-                          dot={{ r: 4, fill: '#ede9fe' }}
-                          connectNulls
-                        />
-                      </LineChart>
+                        <Bar dataKey="porcentaje" radius={[8, 8, 0, 0]} fill="#3b82f6" />
+                      </BarChart>
                     </ResponsiveContainer>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:col-span-3"
-        >
-
-                <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="lg:col-span-3"
-        >
-          <Card className="dark:bg-slate-800 dark:border-slate-700 shadow-xl border-0 bg-gradient-to-br from-white to-sky-50 dark:from-slate-800 dark:to-slate-900">
-            <CardHeader>
-              <CardTitle className="dark:text-white flex items-center gap-2 text-2xl">
-                <Database className="w-6 h-6 text-cyan-600" />
-                Estado hídrico Bogotá-Cundinamarca
-              </CardTitle>
-              <CardDescription className="dark:text-slate-400">
-                Fuente SIMEM - XM | Embalses CHUZA, GUAVIO y MUNA
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              {simemLoading ? (
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  Cargando datos hídricos...
-                </div>
-              ) : simemError ? (
-                <div className="text-sm text-rose-600 dark:text-rose-400">
-                  Error al cargar SIMEM: {simemError}
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card className="dark:bg-slate-900 dark:border-slate-700 border border-slate-200">
-                      <CardContent className="p-5">
-                        <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
-                          Promedio regional
-                        </p>
-                        <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                          {simemData?.promedioRegional.toFixed(2)}%
-                        </p>
-                        <p className="text-xs text-slate-500 mt-2">
-                          Último corte disponible
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    {[chuza, guavio, muna].map((embalse) => (
-                      <Card
-                        key={embalse?.embalse}
-                        className="dark:bg-slate-900 dark:border-slate-700 border border-slate-200"
-                      >
-                        <CardContent className="p-5 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                              {embalse?.embalse ?? 'Sin dato'}
-                            </p>
-                            <Badge variant="secondary">{embalse?.region ?? '--'}</Badge>
-                          </div>
-
-                          <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                            {embalse ? `${embalse.porcentajeLlenado}%` : '--'}
-                          </p>
-
-                          <Progress value={embalse?.porcentajeLlenado ?? 0} className="h-2" />
-
-                          <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-                            <p>
-                              Volumen: {embalse ? (embalse.volumenUtilDiarioEnergia / 1e6).toFixed(1) : '--'} MWh
-                            </p>
-                            <p>
-                              Fecha: {embalse?.fecha ?? '--'}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
                   </div>
 
                   <div className="h-[360px]">
@@ -750,13 +701,13 @@ const response = await fetch(
                           stroke={isDarkMode ? 'hsl(215 25% 22%)' : 'hsl(210 20% 90%)'}
                         />
                         <XAxis
-                          dataKey="fecha"
-                          stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
-                          tick={{
-                            fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)',
-                            fontSize: 12,
-                          }}
-                        />
+  dataKey="fechaLabel"
+  stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
+  tick={{
+    fill: isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)',
+    fontSize: 12,
+  }}
+/>
                         <YAxis
                           domain={[0, 100]}
                           stroke={isDarkMode ? 'hsl(210 40% 60%)' : 'hsl(210 40% 40%)'}
@@ -803,6 +754,13 @@ const response = await fetch(
             </CardContent>
           </Card>
         </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:col-span-3"
+        >
           <Card className="dark:bg-slate-800 dark:border-slate-700 group hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm dark:text-white flex items-center gap-2">
