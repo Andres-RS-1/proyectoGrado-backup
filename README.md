@@ -2,7 +2,7 @@
 
 Dashboard inteligente para monitoreo **en tiempo real** de consumo eléctrico con alertas automáticas. **Proyecto de grado - Ingeniería de Sistemas.**
 
-**[Live Demo →](https://andres-rs-1.github.io/proyectoGrado-backup/)**
+**[Live Demo →](https://andres-rs-1.github.io/proyectoGrado-backup/ - https://proyecto-grado-backup.vercel.app/)**
 
 ## ✨ **Features**
 
@@ -40,6 +40,7 @@ Deploy: GitHub Pages + Docker Hub
 ### **Web (1-click)**
 
 https://andres-rs-1.github.io/proyectoGrado-backup/
+https://proyecto-grado-backup.vercel.app/
 
 
 ### **Docker**
